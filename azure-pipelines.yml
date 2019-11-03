@@ -1,55 +1,113 @@
-# ASP.NET
-# Build and test ASP.NET projects.
-# Add steps that publish symbols, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
 
-trigger:
-- master
+# ASP.NET 
+2 # Build and test ASP.NET projects. 
+3 # Add steps that publish symbols, save build artifacts, deploy, and more: 
+4 # https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4 
+5 
+ 
+6 trigger: 
+7 - master 
+8 
+ 
+9 pool: 
+10   vmImage: 'windows-latest' 
+11 
+ 
+12 variables: 
+13   solution: '**/*.sln' 
+14   buildPlatform: 'Any CPU' 
+15   buildConfiguration: 'Release' 
+16 
+ 
+17 steps: 
+18 - task: NuGetToolInstaller@1 
+19   displayName: Install Nuget 
+20 
+ 
+21 - task: NuGetCommand@2 
+22   displayName: NuGet Restore 
+23   inputs: 
+24     restoreSolution: '$(solution)' 
+25 
+ 
+26 - task: BatchScript@1 
+27   displayName: Build Angular 
+28   inputs: 
+29     filename: '$(Build.SourcesDirectory)\src\PokerLeagueManager.UI.Web\BuildAngular.bat' 
+30 
+ 
+31 - task: VSBuild@1 
+32   displayName: Build Solution 
+33   inputs: 
+34     solution: '$(solution)' 
+35     msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true' 
+36     platform: '$(buildPlatform)' 
+37     configuration: '$(buildConfiguration)' 
+38 
+ 
+39 - task: CopyFiles@2 
+40   displayName: Copy Deployment Packages 
+41   inputs: 
+42     SourceFolder: '$(Build.SourcesDirectory)' 
+43     Contents: | 
+44       **\*.Commands.WebApi.zip 
+45       **\*.Events.WebApi.zip 
+46       **\*.Queries.WebApi.zip 
+47       **\*.UI.Web.zip 
+48       **\*.dacpac 
+49     TargetFolder: '$(Build.ArtifactStagingDirectory)' 
+50     flattenFolders: true 
+51 
+ 
+52 - task: CopyFiles@2 
+53   displayName: Copy Deploy folder 
+54   inputs: 
+55     SourceFolder: '$(Build.SourcesDirectory)\deploy' 
+56     Contents: '**' 
+57     TargetFolder: '$(Build.ArtifactStagingDirectory)\deploy' 
+58 
+ 
+59 - task: CopyFiles@2 
+60   displayName: Copy Utility 
+61   inputs: 
+62     SourceFolder: '$(Build.SourcesDirectory)\src\PokerLeagueManager.Utilities\bin\$(BuildConfiguration)' 
+63     Contents: '**' 
+64     TargetFolder: '$(Build.ArtifactStagingDirectory)\Utility' 
+65 
+ 
+66 - task: VSTest@2 
+67   displayName: Run Unit Tests 
+68   inputs: 
+69     platform: '$(buildPlatform)' 
+70     configuration: '$(buildConfiguration)' 
+71 
+ 
+72 - task: PublishBuildArtifacts@1 
+73   displayName: Publish Artifacts 
+74   inputs: 
+75     PathtoPublish: '$(Build.ArtifactStagingDirectory)' 
+76     ArtifactName: 'drop' 
+77     publishLocation: 'Container' 
 
-pool:
-  vmImage: 'windows-latest'
 
-variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
 
-steps:
-- task: NuGetToolInstaller@1
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
 
-- task: BatchScript@1
-  inputs:
-    filename: 'src/PokerLeagueManager.UI.Web/BuildAngular.bat'
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
 
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
 
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(Build.SourcesDirectory)'
-    Contents: '**/*dacpac'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: 'deploy'
-    Contents: '**/*'
-    TargetFolder: '(Build.SourcesDirectory)'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '(Build.SourcesDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+ 
+
+
+
+ 
+
+© 2019 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+
+ 
