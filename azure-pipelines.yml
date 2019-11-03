@@ -41,8 +41,15 @@ steps:
     SourceFolder: '$(Build.SourcesDirectory)'
     Contents: '**/*dacpac'
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: 'deploy'
+    Contents: '**/*'
+    TargetFolder: '(Build.SourcesDirectory)'
+
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    PathtoPublish: '(Build.SourcesDirectory)'
     ArtifactName: 'drop'
     publishLocation: 'Container'
